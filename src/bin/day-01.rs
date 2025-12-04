@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, io};
 
 const INPUT_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/input/day-01");
 
@@ -7,8 +7,8 @@ struct Arrow {
     zero_count: u16,
 }
 
-impl Arrow {
-    fn new() -> Self {
+impl Default for Arrow {
+    fn default() -> Self {
         Self {
             location: 50,
             zero_count: 0,
@@ -36,10 +36,10 @@ impl From<char> for Direction {
     }
 }
 
-fn main() -> std::io::Result<()> {
-    let rotations: Vec<Rotation> = parse_input(INPUT_PATH)?;
+fn main() {
+    let rotations: Vec<Rotation> = parse_input(INPUT_PATH).unwrap(); // Never fails
 
-    let mut arrow = Arrow::new();
+    let mut arrow = Arrow::default(); // Arrow starts at 50
 
     for rotation in rotations {
         rotate(&mut arrow.location, rotation);
@@ -50,22 +50,21 @@ fn main() -> std::io::Result<()> {
     }
 
     dbg!(arrow.zero_count);
-    Ok(())
 }
 
 fn rotate(arrow_location: &mut u16, rotation: Rotation) {
     const RANGE: u16 = 100;
 
     match rotation.direction {
+        Direction::Right => *arrow_location = (*arrow_location + rotation.distance) % RANGE,
+
         Direction::Left => {
             *arrow_location = (*arrow_location + RANGE - (rotation.distance % RANGE)) % RANGE
         }
-
-        Direction::Right => *arrow_location = (*arrow_location + rotation.distance) % RANGE,
     }
 }
 
-fn parse_input(path: &str) -> std::io::Result<Vec<Rotation>> {
+fn parse_input(path: &str) -> io::Result<Vec<Rotation>> {
     let input = fs::read_to_string(path)?;
 
     Ok(input
@@ -73,11 +72,11 @@ fn parse_input(path: &str) -> std::io::Result<Vec<Rotation>> {
         .filter_map(|line| {
             let mut chars = line.chars();
             let direction: Direction = chars.next()?.into();
-            let rotation: u16 = chars.as_str().parse().ok()?;
+            let distance: u16 = chars.as_str().parse().ok()?;
 
             Some(Rotation {
                 direction,
-                distance: rotation,
+                distance,
             })
         })
         .collect())
