@@ -43,10 +43,6 @@ fn main() {
 
     for rotation in rotations {
         rotate(&mut arrow, rotation);
-
-        if arrow.location == 0 {
-            arrow.zero_count += 1;
-        }
     }
 
     dbg!(arrow.zero_count);
@@ -55,10 +51,16 @@ fn main() {
 fn rotate(arrow: &mut Arrow, rotation: Rotation) {
     const RANGE: i32 = 100;
 
-    match rotation.direction {
-        Direction::Right => arrow.location = (arrow.location + rotation.distance) % RANGE,
+    for _ in 0..rotation.distance {
+        match rotation.direction {
+            Direction::Right => arrow.location = (arrow.location + 1) % RANGE,
 
-        Direction::Left => arrow.location = (arrow.location - rotation.distance).rem_euclid(RANGE),
+            Direction::Left => arrow.location = (arrow.location - 1).rem_euclid(RANGE),
+        }
+
+        if arrow.location == 0 {
+            arrow.zero_count += 1;
+        }
     }
 }
 
