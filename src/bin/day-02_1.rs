@@ -12,7 +12,7 @@ fn main() {
     let ranges = parse_input(INPUT_PATH).unwrap(); // Never fails
 
     // Sum invalid IDs from all ranges
-    let invalid_sum: u64 = ranges.iter().map(|range| sum_invalid_ids(range)).sum();
+    let invalid_sum: u64 = ranges.iter().map(sum_invalid_ids).sum();
 
     dbg!(invalid_sum);
 }
@@ -27,7 +27,7 @@ fn sum_invalid_ids(range: &Range) -> u64 {
 fn check_invalid(n: u64) -> bool {
     let digits = count_digits(n);
 
-    if digits % 2 != 0 {
+    if !digits.is_multiple_of(2) {
         return false;
     }
 
