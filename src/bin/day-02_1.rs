@@ -11,45 +11,37 @@ struct Range {
 fn main() {
     let ranges = parse_input(INPUT_PATH).unwrap(); // Never fails
 
-    let mut invalid_sum = 0;
-
-    for range in ranges {
-        check_invalid(&range, &mut invalid_sum);
-    }
+    // Sum invalid IDs from all ranges
+    let invalid_sum: u64 = ranges.iter().map(|range| sum_invalid_ids(range)).sum();
 
     dbg!(invalid_sum);
 }
 
-fn check_invalid(range: &Range, invalid_sum: &mut u64) {
-    for id in range.start..=range.end {
-        let digits = count_digits(id);
-
-        let Some((hi, lo)) = split_digits(id, digits) else {
-            continue;
-        };
-
-        if hi == lo {
-            *invalid_sum += id;
-        }
-    }
-}
-
-fn count_digits(n: u64) -> u32 {
-    if n < 10 { 1 } else { n.ilog10() + 1 }
+fn sum_invalid_ids(range: &Range) -> u64 {
+    (range.start..=range.end)
+        .filter(|&id| check_invalid(id))
+        .sum()
 }
 
 /// n: integer, d: number of digits
-fn split_digits(n: u64, d: u32) -> Option<(u64, u64)> {
-    if d % 2 != 0 {
-        return None;
+fn check_invalid(n: u64) -> bool {
+    let digits = count_digits(n);
+
+    if digits % 2 != 0 {
+        return false;
     }
 
-    let power = 10u64.pow(d / 2);
+    let divisor = 10u64.pow(digits / 2);
 
-    let lo = n % power;
-    let hi = n / power;
+    let lo = n % divisor;
+    let hi = n / divisor;
 
-    Some((hi, lo))
+    hi == lo
+}
+
+#[inline]
+fn count_digits(n: u64) -> u32 {
+    if n < 10 { 1 } else { n.ilog10() + 1 }
 }
 
 fn parse_input(path: &str) -> io::Result<Vec<Range>> {
@@ -58,11 +50,11 @@ fn parse_input(path: &str) -> io::Result<Vec<Range>> {
     Ok(input
         .split_terminator(',')
         .filter_map(|range| {
-            range.trim().split_once('-').and_then(|(start, end)| {
-                Some(Range {
-                    start: start.parse().ok()?,
-                    end: end.parse().ok()?,
-                })
+            let (start, end) = range.trim().split_once('-')?;
+
+            Some(Range {
+                start: start.parse().ok()?,
+                end: end.parse().ok()?,
             })
         })
         .collect())

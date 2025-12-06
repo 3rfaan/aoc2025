@@ -11,70 +11,66 @@ struct Range {
 fn main() {
     let ranges = parse_input(INPUT_PATH).unwrap(); // Never fails
 
-    let mut invalid_sum = 0;
-
-    for range in ranges {
-        check_invalid(&range, &mut invalid_sum);
-    }
+    // Sum invalid IDs from all ranges
+    let invalid_sum: u64 = ranges.iter().map(|range| sum_invalid_ids(range)).sum();
 
     dbg!(invalid_sum);
 }
 
-fn check_invalid(range: &Range, invalid_sum: &mut u64) {
-    for id in range.start..=range.end {
-        if is_repeating_pattern(id) {
-            *invalid_sum += id;
-        }
-    }
+fn sum_invalid_ids(range: &Range) -> u64 {
+    (range.start..=range.end)
+        .filter(|&id| check_invalid(id))
+        .sum()
 }
 
-fn is_repeating_pattern(n: u64) -> bool {
-    let s = n.to_string();
-    let len = s.len();
+fn check_invalid(n: u64) -> bool {
+    let digits = count_digits(n);
 
-    for pattern_len in 1..=(len / 2) {
-        if len % pattern_len == 0 {
-            let pattern = &s[..pattern_len];
-            let repititions = len / pattern_len;
+    for pattern_len in 1..=(digits / 2) {
+        if digits % pattern_len != 0 {
+            continue;
+        }
 
-            if pattern.repeat(repititions) == s {
-                return true;
+        // Amount of possible repetitions of the pattern in the number
+        let repeats = digits / pattern_len;
+
+        // Extract single pattern (left side)
+        let pattern = n / 10u64.pow(digits - pattern_len);
+
+        // Check from left if all pattern_len digits match pattern
+        let mut remaining = n;
+        let pow = 10u64.pow(pattern_len);
+
+        for _ in 0..repeats {
+            if remaining % pow != pattern {
+                break;
             }
+            remaining /= pow;
+        }
+
+        if remaining == 0 {
+            return true;
         }
     }
-
     false
 }
 
+#[inline]
 fn count_digits(n: u64) -> u32 {
     if n < 10 { 1 } else { n.ilog10() + 1 }
-}
-
-/// n: integer, d: number of digits
-fn split_digits(n: u64, d: u32) -> Option<(u64, u64)> {
-    if d % 2 != 0 {
-        return None;
-    }
-
-    let power = 10u64.pow(d / 2);
-
-    let lo = n % power;
-    let hi = n / power;
-
-    Some((hi, lo))
 }
 
 fn parse_input(path: &str) -> io::Result<Vec<Range>> {
     let input = fs::read_to_string(path)?;
 
     Ok(input
-        .split_terminator(',')
+        .split(',')
         .filter_map(|range| {
-            range.trim().split_once('-').and_then(|(start, end)| {
-                Some(Range {
-                    start: start.parse().ok()?,
-                    end: end.parse().ok()?,
-                })
+            let (start, end) = range.trim().split_once('-')?;
+
+            Some(Range {
+                start: start.parse().ok()?,
+                end: end.parse().ok()?,
             })
         })
         .collect())
