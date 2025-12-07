@@ -7,12 +7,12 @@ const AMOUNT: usize = 12; // Amount of batteries to take from each bank
 fn main() {
     let mut banks = parse_input(INPUT_PATH).unwrap(); // Never fails
 
-    let total: u64 = banks.iter_mut().map(max_joltage).sum();
+    let total: u64 = banks.iter_mut().map(|bank| max_joltage(bank)).sum();
 
     dbg!(total);
 }
 
-fn max_joltage(bank: &mut Vec<u8>) -> u64 {
+fn max_joltage(bank: &mut [u8]) -> u64 {
     // Batteries with largest joltage
     let mut batteries = [0; AMOUNT];
 
